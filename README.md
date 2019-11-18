@@ -1,5 +1,5 @@
 # Responder
-ASP.NET Core API Proxy to help with specification based development
+ASP.NET Core API Proxy to help with specification based development (example specification: https://petstore.swagger.io/v2/swagger.json)
 
 Anticipated to use the following:
 
