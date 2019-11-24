@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Vouzamo.Responder.App.Hubs;
+using Vouzamo.Responder.App.Models;
 
 namespace Vouzamo.Responder.App
 {
@@ -20,7 +22,6 @@ namespace Vouzamo.Responder.App
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllersWithViews();
 
             // In production, the React files will be served from this directory
@@ -28,6 +29,10 @@ namespace Vouzamo.Responder.App
             {
                 configuration.RootPath = "ClientApp/build";
             });
+
+            services.AddSignalR();
+
+            services.AddSingleton<JobPool, JobPool>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -52,6 +57,8 @@ namespace Vouzamo.Responder.App
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapHub<JobHub>("/hub");
+
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");
