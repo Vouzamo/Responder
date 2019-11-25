@@ -15,16 +15,12 @@ namespace Vouzamo.Responder.App.Models
         public string Method { get; set; }
         public PathString Path { get; set; }
         public QueryString QueryString { get; set; }
-        public Stream Body { get; set; }
-        public IHeaderDictionary Headers { get; set; }
+        public string Body { get; set; }
+        //public Dictionary<string, KeyValuePair<string, StringValues>> Headers { get; set; }
 
-        public Request(HttpRequest request)
+        public Request()
         {
-            Method = request.Method;
-            Path = request.Path;
-            QueryString = request.QueryString;
-            Body = request.Body;
-            Headers = request.Headers;
+
         }
     }
 }

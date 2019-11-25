@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import * as SignalR from '@aspnet/signalr';
+import axios from 'axios';
 
 export class Realtime extends Component {
 
@@ -8,10 +9,13 @@ export class Realtime extends Component {
 
         this.state = {
             hubConnection: null,
-            workspace: ''
+            workspace: '',
+            jobs: {},
+            activeJob: ''
         };
 
         this.onJobSubmitted = this.onJobSubmitted.bind(this);
+        this.onJobCompleted = this.onJobCompleted.bind(this);
     }
 
     componentDidMount = () => {
@@ -23,6 +27,7 @@ export class Realtime extends Component {
             .build();
 
         hubConnection.on("JobSubmitted", this.onJobSubmitted);
+        hubConnection.on("JobCompleted", this.onJobCompleted);
 
         this.setState({ hubConnection, workspace }, () => {
             this.state.hubConnection
@@ -32,16 +37,103 @@ export class Realtime extends Component {
         });
     }
 
-    onJobSubmitted(id) {
+    onJobSubmitted = (id, job) => {
+
         console.log('Job Submitted:');
         console.log(id);
+        console.log(job);
+
+        var model = JSON.parse(job);
+
+        console.log(model);
+
+        if (model.Workspace === this.state.workspace) {
+            var jobs = this.state.jobs;
+
+            jobs[id] = model;
+
+            this.setState({
+                jobs: jobs
+            }, () => console.log(this.state.jobs))
+        }
+    }
+
+    onJobCompleted = (key) => {
+
+        var jobs = this.state.jobs;
+        var activeJob = this.state.activeJob;
+
+        if (Object.keys(jobs).includes(key)) {
+
+            delete jobs[key];
+
+            if (activeJob === key) {
+                activeJob = '';
+            }
+
+            this.setState({
+                jobs: jobs,
+                activeJob: activeJob
+            });
+
+        }
+
+    }
+
+    selectJob = (key) => {
+
+        this.setState({
+            activeJob: key
+        });
+
+    }
+
+    respond = (key) => {
+
+        //var job = this.state.jobs[key];
+
+        var statusCode = prompt('Status Code:');
+        var body = prompt('Body:');
+
+        axios.get(`https://localhost:44349/server/complete-job/${key}/${statusCode}/${body}`)
+            .then(res => {
+
+                // SignalR will take care of the rest
+                
+            })
+
     }
 
     render() {
         return (
             <div>
                 <h1>Realtime</h1>
-                <p>See console (for now)</p>
+                {Object.keys(this.state.jobs).length === 0 &&
+                    <div>
+                        <h2>No pending jobs</h2>
+                    <p>To add a job, simply visit <a href={`/server/${this.state.workspace}/`} target="_blank">{ `/server/${this.state.workspace}/*` }</a>.</p>
+                    </div>
+                }
+                <ul className="list-group">
+                    {Object.keys(this.state.jobs).map((key, index) => {
+                        var job = this.state.jobs[key];
+                        var className = this.state.activeJob === key ? 'list-group-item active' : 'list-group-item';
+
+                        return (
+                            <li key={key} className={className} onClick={(e) => this.selectJob(key)}>
+                                {key}
+                                <br />
+                                {job.Request.Path.Value}
+                            </li>
+                        );
+                    })}
+                </ul>
+                {this.state.activeJob !== '' &&
+                    <div>
+                        <h2>Respond to job</h2>
+                        <button onClick={(e) => this.respond(this.state.activeJob)}>Respond</button>
+                    </div>
+                }
             </div>
         );
     }

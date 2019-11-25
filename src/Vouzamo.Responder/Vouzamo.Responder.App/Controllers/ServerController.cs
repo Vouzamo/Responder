@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -28,11 +29,21 @@ namespace Vouzamo.Responder.App.Controllers
         public async Task<IActionResult> SubmitJob(string workspace)
         {
             var id = Guid.NewGuid();
-            var job = new Job(workspace, new Request(Request));
+
+            var request = new Request()
+            {
+                Method = Request.Method,
+                Path = Request.Path,
+                QueryString = Request.QueryString,
+                Body = "",
+                //Headers = Request.Headers.ToDictionary((kvp) => kvp.Key)
+            };
+
+            var job = new Job(workspace, request);
 
             if(Pool.TrySubmitJob(id, job))
             {
-                await Hub.Clients.All.SendAsync("JobSubmitted", id);
+                await Hub.Clients.All.SendAsync("JobSubmitted", id, JsonSerializer.Serialize(job));
             }
 
             // wait for job completion
@@ -45,7 +56,7 @@ namespace Vouzamo.Responder.App.Controllers
         }
 
         [Route("complete-job/{id}/{statusCode}/{message}")]
-        public ActionResult CompleteJob(Guid id, int statusCode, string message)
+        public async Task<ActionResult> CompleteJob(Guid id, int statusCode, string message)
         {
             var response = new Response
             {
@@ -55,6 +66,8 @@ namespace Vouzamo.Responder.App.Controllers
 
             if (Pool.TryCompleteJob(id, response))
             {
+                await Hub.Clients.All.SendAsync("JobCompleted", id);
+
                 return Accepted();
             }
 
