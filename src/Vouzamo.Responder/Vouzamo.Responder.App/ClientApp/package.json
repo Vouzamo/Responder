@@ -14,7 +14,8 @@
     "react-router-dom": "^4.2.2",
     "react-scripts": "^3.0.1",
     "reactstrap": "^6.3.0",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.6.2",
+    "@aspnet/signalr-client": "1.0.0-alpha2-final"
   },
   "devDependencies": {
     "ajv": "^6.9.1",
