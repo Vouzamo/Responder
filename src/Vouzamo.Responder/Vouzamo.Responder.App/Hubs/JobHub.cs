@@ -20,7 +20,7 @@ namespace Vouzamo.Responder.App.Hubs
         {
             if(Pool.TryCompleteJob(id, response))
             {
-                await Clients.All.SendAsync("JobCompleted", id);
+                await Clients.All.SendAsync("JobCompleted", id.ToString());
             }
         }
     }

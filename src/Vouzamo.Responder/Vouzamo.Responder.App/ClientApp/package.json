@@ -15,7 +15,7 @@
     "react-scripts": "^3.0.1",
     "reactstrap": "^6.3.0",
     "rimraf": "^2.6.2",
-    "@aspnet/signalr-client": "1.0.0-alpha2-final"
+    "@aspnet/signalr": "1.1.4"
   },
   "devDependencies": {
     "ajv": "^6.9.1",

@@ -32,7 +32,7 @@ namespace Vouzamo.Responder.App.Controllers
 
             if(Pool.TrySubmitJob(id, job))
             {
-                await Hub.Clients.All.SendAsync("JobSubmitted", id, job);
+                await Hub.Clients.All.SendAsync("JobSubmitted", id);
             }
 
             // wait for job completion
