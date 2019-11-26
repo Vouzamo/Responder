@@ -92,10 +92,17 @@ export class Realtime extends Component {
 
         //var job = this.state.jobs[key];
 
-        var statusCode = prompt('Status Code:');
+        var statusCode = parseInt(prompt('Status Code:'));
+        var contentType = prompt("Content Type:", "text/plain")
         var body = prompt('Body:');
 
-        axios.get(`https://localhost:44349/server/complete-job/${key}/${statusCode}/${body}`)
+        var data = {
+            statusCode: statusCode,
+            contentType: contentType,
+            body: body
+        }
+
+        axios.post(`https://localhost:44349/api/complete-job/${key}`, data)
             .then(res => {
 
                 // SignalR will take care of the rest
@@ -111,7 +118,7 @@ export class Realtime extends Component {
                 {Object.keys(this.state.jobs).length === 0 &&
                     <div>
                         <h2>No pending jobs</h2>
-                    <p>To add a job, simply visit <a href={`/server/${this.state.workspace}/`} target="_blank">{ `/server/${this.state.workspace}/*` }</a>.</p>
+                    <p>To add a job, simply visit <a href={`/proxy/${this.state.workspace}/`} target="_blank">{ `/proxy/${this.state.workspace}/*` }</a>.</p>
                     </div>
                 }
                 <ul className="list-group">

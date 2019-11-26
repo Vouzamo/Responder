@@ -22,7 +22,7 @@ namespace Vouzamo.Responder.App.Results
 
             if(!string.IsNullOrEmpty(Response.Body))
             {
-                response.ContentType = "text/plain";
+                response.ContentType = Response.ContentType;
 
                 var content = Encoding.UTF8.GetBytes(Response.Body);
                 await response.Body.WriteAsync(content, 0, content.Length);
