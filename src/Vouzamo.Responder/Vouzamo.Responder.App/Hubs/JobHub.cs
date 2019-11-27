@@ -9,19 +9,19 @@ namespace Vouzamo.Responder.App.Hubs
 {
     public class JobHub : Hub
     {
-        protected JobPool Pool { get; }
+        protected WorkspaceFactory WorkspaceFactory { get; }
 
-        public JobHub(JobPool pool)
+        public JobHub(WorkspaceFactory workspaceFactory)
         {
-            Pool = pool;
+            WorkspaceFactory = workspaceFactory;
         }
 
-        public async Task CompleteJob(Guid id, Response response)
-        {
-            if(Pool.TryCompleteJob(id, response))
-            {
-                await Clients.All.SendAsync("JobCompleted", id.ToString());
-            }
-        }
+        //public async Task CompleteJob(Guid id, Response response)
+        //{
+        //    if(Pool.TryCompleteJob(id, response))
+        //    {
+        //        await Clients.All.SendAsync("JobCompleted", id.ToString());
+        //    }
+        //}
     }
 }

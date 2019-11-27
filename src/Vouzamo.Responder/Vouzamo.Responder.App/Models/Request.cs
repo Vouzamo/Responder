@@ -13,7 +13,7 @@ namespace Vouzamo.Responder.App.Models
     public class Request
     {
         public string Method { get; set; }
-        public PathString Path { get; set; }
+        public string Path { get; set; }
         public QueryString QueryString { get; set; }
         public string Body { get; set; }
         //public Dictionary<string, KeyValuePair<string, StringValues>> Headers { get; set; }

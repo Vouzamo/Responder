@@ -15,36 +15,48 @@ namespace Vouzamo.Responder.App.Controllers
     public class ProxyController : ControllerBase
     {
         protected IHubContext<JobHub> Hub { get; }
-        protected JobPool Pool { get; }
+        protected WorkspaceFactory WorkspaceFactory { get; }
 
-        public ProxyController(IHubContext<JobHub> hub, JobPool pool)
+        public ProxyController(IHubContext<JobHub> hub, WorkspaceFactory workspaceFactory)
         {
             Hub = hub;
-            Pool = pool;
+            WorkspaceFactory = workspaceFactory;
         }
 
-        [Route("{workspace}/{*url}")]
-        public async Task<IActionResult> SubmitJob(string workspace)
+        [Route("{workspaceKey}/{*url}")]
+        public async Task<IActionResult> SubmitJob(string workspaceKey, string url)
         {
             var id = Guid.NewGuid();
 
             var request = new Request()
             {
                 Method = Request.Method,
-                Path = Request.Path,
+                Path = $"/{url}",
                 QueryString = Request.QueryString,
                 Body = "",
                 //Headers = Request.Headers.ToDictionary((kvp) => kvp.Key)
             };
 
-            var job = new Job(workspace, request);
+            var workspace = WorkspaceFactory.GetWorkspace(workspaceKey);
 
-            if (Pool.TrySubmitJob(id, job))
+            var job = new Job(workspaceKey, request);
+
+            if (workspace.JobPool.TrySubmitJob(id, job))
             {
                 await Hub.Clients.All.SendAsync("JobSubmitted", id, JsonSerializer.Serialize(job));
             }
 
-            // wait for job completion
+            if (workspace.Options != WorkspaceOptions.InterceptNone)
+            {
+                if(workspace.RuleEngine.TryMatchRule(request, out var rule))
+                {
+                    if (workspace.JobPool.TryCompleteJob(id, rule.GenerateResponse(request)))
+                    {
+                        await Hub.Clients.All.SendAsync("JobCompleted", id);
+                    }
+                }
+            }
+
             while (!job.Handled)
             {
                 Thread.Sleep(1000);

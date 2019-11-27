@@ -30,9 +30,14 @@ namespace Vouzamo.Responder.App
                 configuration.RootPath = "ClientApp/build";
             });
 
-            services.AddSignalR();
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
 
-            services.AddSingleton<JobPool, JobPool>();
+            services.AddMemoryCache();
+
+            services.AddSingleton<WorkspaceFactory, WorkspaceFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

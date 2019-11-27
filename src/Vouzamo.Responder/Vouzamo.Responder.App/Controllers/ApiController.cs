@@ -15,23 +15,25 @@ namespace Vouzamo.Responder.App.Controllers
     public class ApiController : ControllerBase
     {
         protected IHubContext<JobHub> Hub { get; }
-        protected JobPool Pool { get; }
+        protected WorkspaceFactory WorkspaceFactory { get; }
 
-        public ApiController(IHubContext<JobHub> hub, JobPool pool)
+        public ApiController(IHubContext<JobHub> hub, WorkspaceFactory workspaceFactory)
         {
             Hub = hub;
-            Pool = pool;
+            WorkspaceFactory = workspaceFactory;
         }
 
-        [HttpPost("complete-job/{id}")]
-        public async Task<ActionResult> CompleteJob(Guid id, [FromBody] Response response)
+        [HttpPost("{workspaceKey}/complete-job/{id}")]
+        public async Task<ActionResult> CompleteJob(string workspaceKey, Guid id, [FromBody] Response response)
         {
             if(!ModelState.IsValid)
             {
                 return new BadRequestObjectResult(ModelState);
             }
 
-            if (Pool.TryCompleteJob(id, response))
+            var workspace = WorkspaceFactory.GetWorkspace(workspaceKey);
+
+            if (workspace.JobPool.TryCompleteJob(id, response))
             {
                 await Hub.Clients.All.SendAsync("JobCompleted", id);
 
