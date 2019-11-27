@@ -23,7 +23,7 @@ namespace Vouzamo.Responder.App.Controllers
             WorkspaceFactory = workspaceFactory;
         }
 
-        [Route("{workspaceKey}/{*url}"), HttpGet, HttpPut, HttpPost, HttpDelete]
+        [Route("{workspaceKey}/{*url}")]
         public async Task<IActionResult> SubmitJob(string workspaceKey, string url)
         {
             var id = Guid.NewGuid();
