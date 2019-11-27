@@ -11,21 +11,26 @@ namespace Vouzamo.Responder.App.Models.Rules
 {
     public class OpenApiSpecificationRule : Rule
     {
+        public Uri SpecificationUri { get; set; }
+        public Action<HttpClient> PreRequest { get; set; }
+
+        protected IHttpClientFactory HttpClientFactory { get; }
         protected OpenApiDocument Specification { get; set; }
 
-        public OpenApiSpecificationRule()
+        public OpenApiSpecificationRule(IHttpClientFactory httpClientFactory)
         {
-            
+            HttpClientFactory = httpClientFactory;
         }
 
-        public async Task LoadSpecification(string uri)
+        public async Task LoadSpecification()
         {
-            using var httpClient = new HttpClient()
-            {
-                BaseAddress = new Uri(uri)
-            };
+            var client = HttpClientFactory.CreateClient();
 
-            var response = await httpClient.GetAsync(string.Empty);
+            client.BaseAddress = SpecificationUri;
+            
+            PreRequest.Invoke(client);
+
+            var response = await client.GetAsync(string.Empty);
             var json = await response.Content.ReadAsStringAsync();
 
             var reader = new OpenApiStringReader();
@@ -52,7 +57,9 @@ namespace Vouzamo.Responder.App.Models.Rules
             {
                 if (matchedPath.PathItem.TryMatchOperation(request, out var operation))
                 {
-                    var operationResponse = operation.Responses.First();
+                    var operationResponse = operation.Responses
+                        .OrderBy(response => Guid.NewGuid())
+                        .First();
 
                     if(int.TryParse(operationResponse.Key, out int statusCode))
                     {
@@ -62,7 +69,7 @@ namespace Vouzamo.Responder.App.Models.Rules
                         {
                             StatusCode = statusCode,
                             ContentType = mediaType.Key,
-                            Body = mediaType.Value.Example?.ToString()
+                            Body = mediaType.Value.Schema.Reference.Id
                         };
 
                         return response;

@@ -22,6 +22,9 @@ namespace Vouzamo.Responder.App
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMemoryCache();
+            services.AddHttpClient();
+
             services.AddControllersWithViews();
 
             // In production, the React files will be served from this directory
@@ -34,8 +37,6 @@ namespace Vouzamo.Responder.App
             {
                 options.EnableDetailedErrors = true;
             });
-
-            services.AddMemoryCache();
 
             services.AddSingleton<WorkspaceFactory, WorkspaceFactory>();
         }
