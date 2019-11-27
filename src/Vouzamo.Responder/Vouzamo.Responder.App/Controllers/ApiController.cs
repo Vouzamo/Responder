@@ -31,7 +31,7 @@ namespace Vouzamo.Responder.App.Controllers
                 return new BadRequestObjectResult(ModelState);
             }
 
-            var workspace = WorkspaceFactory.GetWorkspace(workspaceKey);
+            var workspace = await WorkspaceFactory.GetWorkspace(workspaceKey);
 
             if (workspace.JobPool.TryCompleteJob(id, response))
             {

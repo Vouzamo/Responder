@@ -23,7 +23,7 @@ namespace Vouzamo.Responder.App.Controllers
             WorkspaceFactory = workspaceFactory;
         }
 
-        [Route("{workspaceKey}/{*url}")]
+        [Route("{workspaceKey}/{*url}"), HttpGet, HttpPut, HttpPost, HttpDelete]
         public async Task<IActionResult> SubmitJob(string workspaceKey, string url)
         {
             var id = Guid.NewGuid();
@@ -37,7 +37,7 @@ namespace Vouzamo.Responder.App.Controllers
                 //Headers = Request.Headers.ToDictionary((kvp) => kvp.Key)
             };
 
-            var workspace = WorkspaceFactory.GetWorkspace(workspaceKey);
+            var workspace = await WorkspaceFactory.GetWorkspace(workspaceKey);
 
             var job = new Job(workspaceKey, request);
 

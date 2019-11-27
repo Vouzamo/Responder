@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using System.Threading.Tasks;
+using Vouzamo.Responder.App.Models.Rules;
 
 namespace Vouzamo.Responder.App.Models
 {
@@ -11,16 +13,20 @@ namespace Vouzamo.Responder.App.Models
             Cache = cache;
         }
 
-        public Workspace GetWorkspace(string key)
+        public async Task<Workspace> GetWorkspace(string key)
         {
             if(!Cache.TryGetValue(key, out Workspace workspace))
             {
-                var ruleEngine = new RuleEngine();
+                var ruleEngine = new RulesEngine();
 
-                ruleEngine.RegisterRule(new TestRule()
+                var rule = new OpenApiSpecificationRule()
                 {
                     Name = "Test Rule",
-                });
+                };
+
+                await rule.LoadSpecification("https://petstore.swagger.io/v2/swagger.json");
+
+                ruleEngine.RegisterRule(rule);
 
                 workspace = new Workspace()
                 {

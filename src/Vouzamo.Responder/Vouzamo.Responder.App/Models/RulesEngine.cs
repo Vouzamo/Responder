@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Vouzamo.Responder.App.Models.Rules;
 
 namespace Vouzamo.Responder.App.Models
 {
-
-    public class RuleEngine
+    public class RulesEngine
     {
         protected List<Rule> Rules { get; set; }
 
-        public RuleEngine()
+        public RulesEngine()
         {
             Rules = new List<Rule>();
         }

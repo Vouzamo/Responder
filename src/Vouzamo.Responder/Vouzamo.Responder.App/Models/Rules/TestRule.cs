@@ -1,4 +1,4 @@
-﻿namespace Vouzamo.Responder.App.Models
+﻿namespace Vouzamo.Responder.App.Models.Rules
 {
     public class TestRule : Rule
     {
