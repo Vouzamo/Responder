@@ -9,12 +9,12 @@ namespace Vouzamo.Responder.App.Models
     public class WorkspaceFactory
     {
         protected IMemoryCache Cache { get; }
-        protected IHttpClientFactory HttpClientFactory { get; }
+        protected OpenApiDocumentManager Manager { get; }
 
-        public WorkspaceFactory(IMemoryCache cache, IHttpClientFactory httpClientFactory)
+        public WorkspaceFactory(IMemoryCache cache, OpenApiDocumentManager manager)
         {
             Cache = cache;
-            HttpClientFactory = httpClientFactory;
+            Manager = manager;
         }
 
         public async Task<Workspace> GetWorkspace(string key)
@@ -23,14 +23,11 @@ namespace Vouzamo.Responder.App.Models
             {
                 var ruleEngine = new RulesEngine();
 
-                var rule = new OpenApiSpecificationRule(HttpClientFactory)
+                var rule = new OpenApiSpecificationRule(Manager)
                 {
                     Name = "Test Rule",
-                    SpecificationUri = new Uri("https://api.swaggerhub.com/apis/DEPTUSA/fwdusa-content-api/1.0.0/swagger.json"),
-                    PreRequest = (client) => client.DefaultRequestHeaders.Add("Authorization", "eaaebed3-297d-43fe-97aa-9f114cec160b")
+                    SpecificationUri = new Uri("https://api.swaggerhub.com/apis/DEPTUSA/fwdusa-content-api/1.0.0/swagger.json")
                 };
-
-                await rule.LoadSpecification();
 
                 ruleEngine.RegisterRule(rule);
 

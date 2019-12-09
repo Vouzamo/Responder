@@ -1,9 +1,7 @@
 ﻿using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Readers;
 using System;
 using System.Linq;
-using System.Net.Http;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Vouzamo.Responder.App.Extensions;
 
@@ -11,31 +9,14 @@ namespace Vouzamo.Responder.App.Models.Rules
 {
     public class OpenApiSpecificationRule : Rule
     {
+        protected OpenApiDocumentManager Manager { get; set; }
+        protected OpenApiDocument Specification => Manager.GetDocument(SpecificationUri).Result;
+
         public Uri SpecificationUri { get; set; }
-        public Action<HttpClient> PreRequest { get; set; }
 
-        protected IHttpClientFactory HttpClientFactory { get; }
-        protected OpenApiDocument Specification { get; set; }
-
-        public OpenApiSpecificationRule(IHttpClientFactory httpClientFactory)
+        public OpenApiSpecificationRule(OpenApiDocumentManager manager)
         {
-            HttpClientFactory = httpClientFactory;
-        }
-
-        public async Task LoadSpecification()
-        {
-            var client = HttpClientFactory.CreateClient();
-
-            client.BaseAddress = SpecificationUri;
-            
-            PreRequest.Invoke(client);
-
-            var response = await client.GetAsync(string.Empty);
-            var json = await response.Content.ReadAsStringAsync();
-
-            var reader = new OpenApiStringReader();
-
-            Specification = reader.Read(json, out var diagnostic);
+            Manager = manager;
         }
 
         public override bool IsMatch(Request request)
@@ -51,7 +32,7 @@ namespace Vouzamo.Responder.App.Models.Rules
             return false;
         }
 
-        public override Response GenerateResponse(Request request)
+        public override async Task<Response> GenerateResponse(Request request)
         {
             foreach (var matchedPath in Specification.Paths.MatchPath(request))
             {
@@ -65,11 +46,15 @@ namespace Vouzamo.Responder.App.Models.Rules
                     {
                         var mediaType = operationResponse.Value.Content.First();
 
+                        var schema = await mediaType.Value.Schema.Reference.ResolveReference<OpenApiSchema>(Specification, Manager);
+
+                        var example = await schema.BuildExample(Manager);
+
                         var response = new Response()
                         {
                             StatusCode = statusCode,
                             ContentType = mediaType.Key,
-                            Body = mediaType.Value.Schema.Reference.Id
+                            Body = JsonSerializer.Serialize(example)
                         };
 
                         return response;

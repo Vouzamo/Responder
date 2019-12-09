@@ -50,7 +50,7 @@ namespace Vouzamo.Responder.App.Controllers
             {
                 if(workspace.RuleEngine.TryMatchRule(request, out var rule))
                 {
-                    if (workspace.JobPool.TryCompleteJob(id, rule.GenerateResponse(request)))
+                    if (workspace.JobPool.TryCompleteJob(id, await rule.GenerateResponse(request)))
                     {
                         await Hub.Clients.All.SendAsync("JobCompleted", id);
                     }

@@ -1,4 +1,6 @@
-﻿namespace Vouzamo.Responder.App.Models.Rules
+﻿using System.Threading.Tasks;
+
+namespace Vouzamo.Responder.App.Models.Rules
 {
     public class TestRule : Rule
     {
@@ -12,7 +14,7 @@
             return request.Path == "/match-this";
         }
 
-        public override Response GenerateResponse(Request request)
+        public override async Task<Response> GenerateResponse(Request request)
         {
             return new Response()
             {
