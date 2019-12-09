@@ -132,25 +132,44 @@ namespace Vouzamo.Responder.App.Extensions
 
         public static async Task<object> BuildExample(this OpenApiResolvedReference<OpenApiSchema> schema, OpenApiDocumentManager manager)
         {
-            var example = new Dictionary<string, object>();
-
-            foreach (var property in schema.Resolved.Properties)
+            if(schema.Resolved.UnresolvedReference) // Unresolved (potentially redundant)
             {
-                if (property.Value.Example != null)
+                var resolvedSchema = await schema.Resolved.Reference.ResolveReference<OpenApiSchema>(schema.Document, manager);
+                
+                return await BuildExample(resolvedSchema, manager);
+            }
+            else if(schema.Resolved.Example != null) // Example
+            {
+                return schema.Resolved.Example.GetValue();
+            }
+            else
+            {
+                switch (schema.Resolved.Type) // Primitives
                 {
-                    var value = property.Value.Example.GetValue();
+                    case "object":
+                        var example = new Dictionary<string, object>();
 
-                    example.Add(property.Key, value);
-                }
-                else if (property.Value.Reference != null)
-                {
-                    var resolvedSchema = await property.Value.Reference.ResolveReference<OpenApiSchema>(schema.Document, manager);
+                        foreach (var property in schema.Resolved.Properties)
+                        {
+                            var resolvedPropertySchema = new OpenApiResolvedReference<OpenApiSchema>(property.Value, schema.Document);
 
-                    example.Add(property.Key, await BuildExample(resolvedSchema, manager));
+                            var value = await BuildExample(resolvedPropertySchema, manager);
+
+                            example.Add(property.Key, value);
+                        }
+
+                        return example;
+                    case "string":
+                        return "Example String";
+                    case "integer":
+                        return 123;
+                    case "array":
+                        var arraySchema = new OpenApiResolvedReference<OpenApiSchema>(schema.Resolved.Items, schema.Document);
+                        return new List<object> { await BuildExample(arraySchema, manager) };
+                    default:
+                        return null;
                 }
             }
-
-            return example;
         }
     }
 }

@@ -46,15 +46,22 @@ namespace Vouzamo.Responder.App.Models.Rules
                     {
                         var mediaType = operationResponse.Value.Content.First();
 
-                        var schema = await mediaType.Value.Schema.Reference.ResolveReference<OpenApiSchema>(Specification, Manager);
+                        var body = "";
 
-                        var example = await schema.BuildExample(Manager);
+                        if(mediaType.Value.Schema != null)
+                        {
+                            var schema = await mediaType.Value.Schema.Reference.ResolveReference<OpenApiSchema>(Specification, Manager);
+
+                            var example = await schema.BuildExample(Manager);
+
+                            body = JsonSerializer.Serialize(example);
+                        }
 
                         var response = new Response()
                         {
                             StatusCode = statusCode,
                             ContentType = mediaType.Key,
-                            Body = JsonSerializer.Serialize(example)
+                            Body = body
                         };
 
                         return response;

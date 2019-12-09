@@ -26,7 +26,8 @@ namespace Vouzamo.Responder.App.Models
                 var rule = new OpenApiSpecificationRule(Manager)
                 {
                     Name = "Test Rule",
-                    SpecificationUri = new Uri("https://api.swaggerhub.com/apis/DEPTUSA/fwdusa-content-api/1.0.0/swagger.json")
+                    SpecificationUri = new Uri("https://petstore.swagger.io/v2/swagger.json")
+                    //SpecificationUri = new Uri("https://api.swaggerhub.com/apis/DEPTUSA/fwdusa-content-api/1.0.0/swagger.json")
                 };
 
                 ruleEngine.RegisterRule(rule);
