@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import * as SignalR from '@aspnet/signalr';
 import axios from 'axios';
+import JobInputs from './JobInputs.js';
 
 export class Realtime extends Component {
 
@@ -16,6 +17,7 @@ export class Realtime extends Component {
 
         this.onJobSubmitted = this.onJobSubmitted.bind(this);
         this.onJobCompleted = this.onJobCompleted.bind(this);
+        this.selectJob = this.selectJob.bind(this);
     }
 
     componentDidMount = () => {
@@ -88,27 +90,6 @@ export class Realtime extends Component {
 
     }
 
-    respond = (key) => {
-
-        var statusCode = parseInt(prompt('Status Code:'));
-        var contentType = prompt("Content Type:", "text/plain")
-        var body = prompt('Body:');
-
-        var data = {
-            statusCode: statusCode,
-            contentType: contentType,
-            body: body
-        }
-
-        axios.post(`https://localhost:44349/api/${this.state.workspace}/complete-job/${key}`, data)
-            .then(res => {
-
-                // SignalR will take care of the rest
-                
-            })
-
-    }
-
     render() {
         return (
             <div>
@@ -125,7 +106,7 @@ export class Realtime extends Component {
                         var className = this.state.activeJob === key ? 'list-group-item active' : 'list-group-item';
 
                         return (
-                            <li key={key} className={className} onClick={(e) => this.selectJob(key)}>
+                            <li key={key} className={className} onClick={() => this.selectJob(key)}>
                                 {key}
                                 <br />
                                 {job.Request.Path.Value}
@@ -136,7 +117,7 @@ export class Realtime extends Component {
                 {this.state.activeJob !== '' &&
                     <div>
                         <h2>Respond to job</h2>
-                        <button onClick={(e) => this.respond(this.state.activeJob)}>Respond</button>
+                        <JobInputs workspace={this.state.workspace} job={this.state.jobs[this.state.activeJob]} jobId={this.state.activeJob} />
                     </div>
                 }
             </div>

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Vouzamo.Responder.App.Converters;
 using Vouzamo.Responder.App.Hubs;
 using Vouzamo.Responder.App.Models;
 
@@ -25,7 +26,13 @@ namespace Vouzamo.Responder.App
             services.AddMemoryCache();
             services.AddHttpClient();
 
-            services.AddControllersWithViews();
+            services
+                .AddControllersWithViews()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new ObjectToPrimitiveConverter());
+                    options.JsonSerializerOptions.Converters.Add(new RuleInputConverter());
+                });
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>

@@ -14,14 +14,21 @@ namespace Vouzamo.Responder.App.Models.Rules
             return request.Path == "/match-this";
         }
 
-        public override async Task<Response> GenerateResponse(Request request)
+        public override async Task<bool> TryProcessJob(Job job)
         {
-            return new Response()
+            job.Response = new Response()
             {
                 StatusCode = 200,
                 ContentType = "application/json",
                 Body = "{ \"success\": true, \"errors\": [] }"
             };
+
+            return true;
+        }
+
+        public override Task PrepareJob(Job job)
+        {
+            return Task.CompletedTask;
         }
     }
 }

@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using FastDeepCloner;
+using System.Collections.Generic;
 using System.Linq;
+using Vouzamo.Responder.App.Extensions;
 using Vouzamo.Responder.App.Models.Rules;
 
 namespace Vouzamo.Responder.App.Models
@@ -22,7 +24,12 @@ namespace Vouzamo.Responder.App.Models
         {
             match = Rules.FirstOrDefault(rule => rule.IsMatch(request));
 
-            return match != default(Rule);
+            if(match is default(Rule))
+            {
+                match = new DefaultRule();
+            }
+
+            return true;
         }
 
         public bool TryMatchRules(Request request, out IEnumerable<Rule> matches)

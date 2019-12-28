@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Vouzamo.Responder.App.Hubs;
 using Vouzamo.Responder.App.Models;
+using Vouzamo.Responder.App.Models.Rules;
 using Vouzamo.Responder.App.Results;
 
 namespace Vouzamo.Responder.App.Controllers
@@ -41,19 +42,20 @@ namespace Vouzamo.Responder.App.Controllers
 
             var job = new Job(workspaceKey, request);
 
-            if (workspace.JobPool.TrySubmitJob(id, job))
+            if (workspace.RuleEngine.TryMatchRule(request, out var rule))
             {
-                await Hub.Clients.All.SendAsync("JobSubmitted", id, JsonSerializer.Serialize(job));
-            }
+                await rule.PrepareJob(job);
 
-            if (workspace.Options != WorkspaceOptions.InterceptNone)
-            {
-                if(workspace.RuleEngine.TryMatchRule(request, out var rule))
+                if (workspace.JobPool.TrySubmitJob(id, job))
                 {
-                    if (workspace.JobPool.TryCompleteJob(id, await rule.GenerateResponse(request)))
-                    {
-                        await Hub.Clients.All.SendAsync("JobCompleted", id);
-                    }
+                    var json = JsonSerializer.Serialize(job);
+
+                    await Hub.Clients.All.SendAsync("JobSubmitted", id, json);
+                }
+
+                if(!await rule.TryProcessJob(job))
+                {
+                    // Log why
                 }
             }
 
@@ -61,6 +63,8 @@ namespace Vouzamo.Responder.App.Controllers
             {
                 Thread.Sleep(1000);
             }
+
+            await Hub.Clients.All.SendAsync("JobCompleted", id);
 
             return new JobResponseActionResult(job.Response);
         }

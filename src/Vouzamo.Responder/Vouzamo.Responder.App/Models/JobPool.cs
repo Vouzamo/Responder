@@ -12,23 +12,16 @@ namespace Vouzamo.Responder.App.Models
             Jobs = new Dictionary<Guid, Job>();
         }
 
+        public bool TryGetJob(Guid id, out Job job)
+        {
+            return Jobs.TryGetValue(id, out job);
+        }
+
         public bool TrySubmitJob(Guid id, Job job)
         {
             if(!Jobs.ContainsKey(id))
             {
                 Jobs.Add(id, job);
-
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool TryCompleteJob(Guid id, Response response)
-        {
-            if (Jobs.TryGetValue(id, out var job))
-            {
-                job.Respond(response);
 
                 return true;
             }

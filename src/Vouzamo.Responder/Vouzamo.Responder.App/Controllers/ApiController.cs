@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi.Readers;
 using Vouzamo.Responder.App.Hubs;
 using Vouzamo.Responder.App.Models;
+using Vouzamo.Responder.App.Models.Rules;
 
 namespace Vouzamo.Responder.App.Controllers
 {
@@ -24,7 +26,7 @@ namespace Vouzamo.Responder.App.Controllers
         }
 
         [HttpPost("{workspaceKey}/complete-job/{id}")]
-        public async Task<ActionResult> CompleteJob(string workspaceKey, Guid id, [FromBody] Response response)
+        public async Task<ActionResult> CompleteJob(string workspaceKey, Guid id, [FromBody] Dictionary<string, object> userInputs)
         {
             if(!ModelState.IsValid)
             {
@@ -33,11 +35,17 @@ namespace Vouzamo.Responder.App.Controllers
 
             var workspace = await WorkspaceFactory.GetWorkspace(workspaceKey);
 
-            if (workspace.JobPool.TryCompleteJob(id, response))
+            if(workspace.JobPool.TryGetJob(id, out Job job))
             {
-                await Hub.Clients.All.SendAsync("JobCompleted", id);
+                job.UserInput = userInputs;
 
-                return Accepted();
+                if (workspace.RuleEngine.TryMatchRule(job.Request, out Rule rule))
+                {
+                    if (await rule.TryProcessJob(job))
+                    {
+                        return Accepted();
+                    }
+                }
             }
 
             return NotFound();

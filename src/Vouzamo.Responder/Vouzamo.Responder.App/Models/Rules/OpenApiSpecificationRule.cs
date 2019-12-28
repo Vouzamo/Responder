@@ -7,12 +7,12 @@ using Vouzamo.Responder.App.Extensions;
 
 namespace Vouzamo.Responder.App.Models.Rules
 {
-    public class OpenApiSpecificationRule : Rule
+    public class OpenApiSpecificationRule : UserInputRule
     {
-        protected OpenApiDocumentManager Manager { get; set; }
-        protected OpenApiDocument Specification => Manager.GetDocument(SpecificationUri).Result;
-
+        public OpenApiDocumentManager Manager { get; protected set; }
         public Uri SpecificationUri { get; set; }
+
+        protected OpenApiDocument Specification => Manager.GetDocument(SpecificationUri).Result;
 
         public OpenApiSpecificationRule(OpenApiDocumentManager manager)
         {
@@ -32,44 +32,64 @@ namespace Vouzamo.Responder.App.Models.Rules
             return false;
         }
 
-        public override async Task<Response> GenerateResponse(Request request)
+        public override async Task PrepareJob(Job job)
         {
-            foreach (var matchedPath in Specification.Paths.MatchPath(request))
+            await base.PrepareJob(job);
+
+            foreach (var matchedPath in Specification.Paths.MatchPath(job.Request))
             {
-                if (matchedPath.PathItem.TryMatchOperation(request, out var operation))
+                if (matchedPath.PathItem.TryMatchOperation(job.Request, out var operation))
                 {
-                    var operationResponse = operation.Responses
-                        .OrderBy(response => Guid.NewGuid())
-                        .First();
+                    var selectInput = new SelectRuleInput("Operation Response", true);
+                    selectInput.Options.AddRange(operation.Responses.Keys);
 
-                    if(int.TryParse(operationResponse.Key, out int statusCode))
+                    job.Inputs.Add(selectInput);
+                }
+            }
+        }
+
+        public override async Task<bool> TryProcessJob(Job job)
+        {
+            foreach (var matchedPath in Specification.Paths.MatchPath(job.Request))
+            {
+                if (matchedPath.PathItem.TryMatchOperation(job.Request, out var operation))
+                {
+                    if(job.UserInput.TryGetValue("Operation Response", out object input))
                     {
-                        var mediaType = operationResponse.Value.Content.First();
+                        var inputAsString = input as string;
 
-                        var body = "";
-
-                        if(mediaType.Value.Schema != null)
+                        if (operation.Responses.TryGetValue(inputAsString, out var operationResponse))
                         {
-                            var schema = await mediaType.Value.Schema.Reference.ResolveReference<OpenApiSchema>(Specification, Manager);
+                            if (int.TryParse(inputAsString, out int statusCode))
+                            {
+                                var mediaType = operationResponse.Content.First();
 
-                            var example = await schema.BuildExample(Manager);
+                                var body = "";
 
-                            body = JsonSerializer.Serialize(example);
+                                if (mediaType.Value.Schema != null)
+                                {
+                                    var schema = await mediaType.Value.Schema.Reference.ResolveReference<OpenApiSchema>(Specification, Manager);
+
+                                    var example = await schema.BuildExample(Manager);
+
+                                    body = JsonSerializer.Serialize(example);
+                                }
+
+                                job.Response = new Response()
+                                {
+                                    StatusCode = statusCode,
+                                    ContentType = mediaType.Key,
+                                    Body = body
+                                };
+
+                                return true;
+                            }
                         }
-
-                        var response = new Response()
-                        {
-                            StatusCode = statusCode,
-                            ContentType = mediaType.Key,
-                            Body = body
-                        };
-
-                        return response;
                     }
                 }
             }
 
-            throw new Exception("Couldn't generate response for OpenAPI rule.");
+            return false;
         }
     }
 }
